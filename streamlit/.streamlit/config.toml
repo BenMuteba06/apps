@@ -1,0 +1,12 @@
+[theme]
+base = "light"            # "light" or "dark"
+primaryColor = "#2563EB"  # Azure-like blue
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F8FAFC"
+textColor = "#111827"
+font = "sans serif"
+
+[server]
+headless = true
+port = 8501
+enableCORS = true
