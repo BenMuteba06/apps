@@ -65,7 +65,7 @@ streamlit run streamlit/app.py
 ## Deploying to Streamlit Community Cloud
 
 1. Push this repo to GitHub
-2. Go to [share.streamlit.io](https://share.streamlit.io)
+2. We can use [share.streamlit.io](https://share.streamlit.io), or App Runner AWS or Ngrok.com or render.com but none of these are working yet.
 3. Connect your GitHub account
 4. Set **Main file path** to `streamlit/app.py`
 5. Click Deploy — done
