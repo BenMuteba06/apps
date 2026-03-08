@@ -47,25 +47,6 @@ def header():
         st.caption(datetime.now().strftime("Last refreshed: %b %d, %Y %I:%M %p"))
     st.markdown("<hr style='margin-top:6px;margin-bottom:18px;'>", unsafe_allow_html=True)
 
-# -------------------- Sidebar Navigation -------------------
-# def sidebar():
-#     st.sidebar.title("Navigation")
-#     return st.sidebar.radio(
-#         "Go to",
-#         options=[
-#             "Overview",
-#             "KPI 01 – Transactions Created",
-#             "KPI 02 – Documents Generated",  # adding kpi 2 to the sidebar options
-#             "KPI 03 – Documents Executed",
-#             "KPI 04 – Daily Execution Rate",
-#             "KPI 05 – Parties per Transaction",
-#             "KPI 06 – Envelope & Recipient Events",
-#             "KPI 07 – TCPA Consent",
-#             "KPI 08 – Time to Txn Execution",
-#         ],
-#         index=0,
-#         label_visibility="collapsed",
-#     )
 
 # -------------------- Sidebar Navigation (unified) -------------------
 def sidebar():
@@ -90,143 +71,186 @@ def sidebar():
     selected = st.sidebar.radio("Go to", options=list(PAGES.keys()), index=0, label_visibility="collapsed")
     return selected, PAGES[selected]
 
+# -------------------- Imports (add to top of app.py) --------------------
+import sys
+from pathlib import Path
+
+# Make sure io_layer is importable when running from the streamlit/ subfolder
+_ROOT = Path(__file__).resolve().parent.parent   # .../Desktop/apps
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+from io_layer.data_loader import DataSourceConfig, load_tables
 
 
-# -------------------- KPI 01 Data & Chart ------------------
-PASTED_DATA = """day\ttransactions_created
-2/18/2026\t2
-2/19/2026\t2
-2/21/2026\t7
-2/23/2026\t2
-2/24/2026\t1
-2/25/2026\t1
-2/26/2026\t1
-2/27/2026\t1
-2/28/2026\t9
-"""
+# -------------------- Data ingestion --------------------
+_ZIP_PATH     = Path(__file__).resolve().parent / "assets" / "kpis.zip"
+_EXTRACT_DIR  = Path("C:/temp/kpi_unzipped")   # safe path — no special chars
 
 
-# -------------------- KPI 02 Data (pasted) ------------------
-PASTED_DATA_KPI2 = """day\tdocuments_generated
-2/18/2026\t2
-2/19/2026\t2
-2/21/2026\t7
-2/23/2026\t2
-2/24/2026\t1
-2/25/2026\t1
-2/26/2026\t1
-2/27/2026\t1
-"""
+def load_data() -> dict:
+    """
+    Load all KPI tables from the zip file.
+    Called on every page render (no caching) so data is always fresh.
+    Returns a dict[str, pd.DataFrame] keyed by normalized table name.
+    """
+    cfg = DataSourceConfig(
+        source_path=str(_ZIP_PATH),
+        extract_to=str(_EXTRACT_DIR),
+        recurse=True,
+        clean_names=True,
+        allowed_tables=None,
+        options_per_table=None,
+    )
+    return load_tables(cfg)
 
 
-# -------------------- KPI 03 Data (pasted) ------------------
-PASTED_DATA_KPI3 = """day\tdocuments_executed
-2/18/2026\t1
-2/19/2026\t1
-2/22/2026\t1
-2/23/2026\t1
-2/24/2026\t1
-"""
+# -------------------- Helper: safe table lookup --------------------
+def get_table(tables: dict, name: str) -> "pd.DataFrame":
+    """
+    Fetch a table by name with a clear error if it's missing.
+    `name` should match the normalized key e.g. 'kpi_01_transactions_created'
+    """
+    if name not in tables:
+        available = ", ".join(tables.keys())
+        raise KeyError(f"Table '{name}' not found. Available: {available}")
+    return tables[name].copy()
 
-# -------------------- KPI 04 Data (pasted) ------------------
-PASTED_DATA_KPI4 = """day\tgenerated\texecuted\texecution_rate
-2/18/2026\t2\t1\t0.5
-2/19/2026\t2\t1\t0.5
-2/21/2026\t7\t0\t0.00E+00
-2/23/2026\t2\t1\t0.5
-2/24/2026\t1\t1\t1
-2/25/2026\t1\t0\t0.00E+00
-2/26/2026\t1\t0\t0.00E+00
-2/27/2026\t1\t0\t0.00E+00
-"""
+# # -------------------- KPI 01 Data & Chart ------------------
+# PASTED_DATA = """day\ttransactions_created
+# 2/18/2026\t2
+# 2/19/2026\t2
+# 2/21/2026\t7
+# 2/23/2026\t2
+# 2/24/2026\t1
+# 2/25/2026\t1
+# 2/26/2026\t1
+# 2/27/2026\t1
+# 2/28/2026\t9
+# """
 
-# -------------------- KPI 05 Data (pasted) ------------------
-PASTED_DATA_KPI5 = """transaction_id\tdistinct_parties_on_docs\tdistinct_signer_emails
-019c6ea7-ed80-7d1e-acb6-42c279830bd6\t3\t3
-019c7324-1293-7df0-b18d-fc34389efcf3\t2\t2
-019c7347-e80f-73b4-8276-b72013d7cfaa\t2\t2
-019c7757-deb5-7b0b-b5a1-c00ca12907a8\t2\t2
-019c7d81-ab7d-77af-aff7-68a5f25508b2\t2\t2
-019c7e30-d0d8-7214-979c-3ad6f093db05\t2\t2
-019c7e3f-bf56-7f9e-81a7-389a149b9adc\t2\t2
-019c80ca-9398-7be4-a30a-746d00aaaa7c\t2\t2
-019c826f-3b61-7d25-85aa-9bce7909c341\t2\t2
-019c8272-1fd6-7bec-9fab-6eb546848684\t2\t2
-019c8275-a6e7-7894-895b-187b38dcc63b\t2\t2
-019c8c82-02bc-78ec-a1dc-2c9df1a98160\t2\t2
-019c8cd4-6422-7a75-92b6-b778169e42bd\t2\t2
-019c8cfa-f121-751d-b91a-67f07104806b\t2\t2
-019c95e4-7a54-775c-b0ae-beffe26001b1\t2\t2
-019c9ab4-aecc-7eb6-ad43-06c2f514084d\t2\t2
-019ca186-7c53-7544-92c3-06fa16d27988\t3\t3
-019ca758-0c08-7976-8dc0-d1ebce57a252\t2\t2
-"""
-# -------------------- KPI 06 Data (pasted) ------------------
-PASTED_DATA_KPI6 = """day\tenvelope_sent\trecipient_delivered\trecipient_completed\tenvelope_completed\ttotal_events
-2/18/2026\t4\t5\t8\t1\t22
-2/19/2026\t4\t4\t6\t1\t19
-2/21/2026\t14\t9\t10\t0\t37
-2/22/2026\t0\t1\t2\t1\t6
-2/23/2026\t4\t3\t4\t1\t14
-2/24/2026\t2\t2\t4\t1\t11
-2/25/2026\t2\t1\t2\t0\t5
-2/26/2026\t2\t1\t0\t0\t3
-2/27/2026\t2\t1\t2\t0\t5
-"""
-# -------------------- KPI 07 Data (pasted) ------------------
-PASTED_DATA_KPI7 = """day\ttcpa_yes\ttcpa_no\ttotal_records
-2/6/2026\t1\t0\t1
-2/10/2026\t1\t0\t1
-2/12/2026\t3\t0\t3
-2/13/2026\t1\t0\t1
-2/17/2026\t2\t0\t2
-2/18/2026\t8\t0\t8
-2/19/2026\t7\t0\t7
-2/20/2026\t2\t0\t2
-2/21/2026\t4\t0\t4
-2/22/2026\t1\t0\t1
-2/23/2026\t3\t0\t3
-2/25/2026\t3\t0\t3
-2/26/2026\t1\t0\t1
-2/27/2026\t1\t0\t1
-2/28/2026\t2\t0\t2
-"""
 
-# -------------------- KPI 08 Data (pasted) ------------------
-PASTED_DATA_KPI8 = """executed_transactions\tmedian_time_to_txn_execution\tp95_time_to_txn_execution
-5\t07:58.8\t11:30.0
-"""
+# # -------------------- KPI 02 Data (pasted) ------------------
+# PASTED_DATA_KPI2 = """day\tdocuments_generated
+# 2/18/2026\t2
+# 2/19/2026\t2
+# 2/21/2026\t7
+# 2/23/2026\t2
+# 2/24/2026\t1
+# 2/25/2026\t1
+# 2/26/2026\t1
+# 2/27/2026\t1
+# """
 
-# -------------------- KPI 09 Data (pasted) ------------------
-PASTED_DATA_KPI9 = """first_seen_ts\tlast_seen_ts\tlong_realty_users
-2026-02-13 05:14:47.929035+00:00\t2026-02-27 23:01:00.270488+00:00\t84
-"""
 
-# -------------------- KPI 10 Data (pasted) ------------------
-PASTED_DATA_KPI10 = """day\tusers_touched
-2/13/2026\t42
-2/18/2026\t9
-2/19/2026\t5
-2/20/2026\t1
-2/21/2026\t7
-2/23/2026\t2
-2/24/2026\t9
-2/25/2026\t3
-2/26/2026\t2
-2/27/2026\t4
-"""
+# # -------------------- KPI 03 Data (pasted) ------------------
+# PASTED_DATA_KPI3 = """day\tdocuments_executed
+# 2/18/2026\t1
+# 2/19/2026\t1
+# 2/22/2026\t1
+# 2/23/2026\t1
+# 2/24/2026\t1
+# """
 
-# -------------------- KPI 11 Data (pasted) ------------------
-PASTED_DATA_KPI11 = """event_date\tmetric\ttrue_count\tfalse_count\tmissing_count
-3/1/2026\thasExistingMortgageCompany\t1\t0\t0
-3/1/2026\tinterestedInLowerPayment\t0\t0\t1
-2/23/2026\thasExistingMortgageCompany\t0\t1\t0
-2/23/2026\tinterestedInLowerPayment\t1\t0\t0
-2/19/2026\thasExistingMortgageCompany\t0\t1\t0
-2/19/2026\tinterestedInLowerPayment\t1\t0\t0
-2/18/2026\thasExistingMortgageCompany\t1\t0\t0
-2/18/2026\tinterestedInLowerPayment\t1\t0\t0
-"""
+# # -------------------- KPI 04 Data (pasted) ------------------
+# PASTED_DATA_KPI4 = """day\tgenerated\texecuted\texecution_rate
+# 2/18/2026\t2\t1\t0.5
+# 2/19/2026\t2\t1\t0.5
+# 2/21/2026\t7\t0\t0.00E+00
+# 2/23/2026\t2\t1\t0.5
+# 2/24/2026\t1\t1\t1
+# 2/25/2026\t1\t0\t0.00E+00
+# 2/26/2026\t1\t0\t0.00E+00
+# 2/27/2026\t1\t0\t0.00E+00
+# """
+
+# # -------------------- KPI 05 Data (pasted) ------------------
+# PASTED_DATA_KPI5 = """transaction_id\tdistinct_parties_on_docs\tdistinct_signer_emails
+# 019c6ea7-ed80-7d1e-acb6-42c279830bd6\t3\t3
+# 019c7324-1293-7df0-b18d-fc34389efcf3\t2\t2
+# 019c7347-e80f-73b4-8276-b72013d7cfaa\t2\t2
+# 019c7757-deb5-7b0b-b5a1-c00ca12907a8\t2\t2
+# 019c7d81-ab7d-77af-aff7-68a5f25508b2\t2\t2
+# 019c7e30-d0d8-7214-979c-3ad6f093db05\t2\t2
+# 019c7e3f-bf56-7f9e-81a7-389a149b9adc\t2\t2
+# 019c80ca-9398-7be4-a30a-746d00aaaa7c\t2\t2
+# 019c826f-3b61-7d25-85aa-9bce7909c341\t2\t2
+# 019c8272-1fd6-7bec-9fab-6eb546848684\t2\t2
+# 019c8275-a6e7-7894-895b-187b38dcc63b\t2\t2
+# 019c8c82-02bc-78ec-a1dc-2c9df1a98160\t2\t2
+# 019c8cd4-6422-7a75-92b6-b778169e42bd\t2\t2
+# 019c8cfa-f121-751d-b91a-67f07104806b\t2\t2
+# 019c95e4-7a54-775c-b0ae-beffe26001b1\t2\t2
+# 019c9ab4-aecc-7eb6-ad43-06c2f514084d\t2\t2
+# 019ca186-7c53-7544-92c3-06fa16d27988\t3\t3
+# 019ca758-0c08-7976-8dc0-d1ebce57a252\t2\t2
+# """
+# # -------------------- KPI 06 Data (pasted) ------------------
+# PASTED_DATA_KPI6 = """day\tenvelope_sent\trecipient_delivered\trecipient_completed\tenvelope_completed\ttotal_events
+# 2/18/2026\t4\t5\t8\t1\t22
+# 2/19/2026\t4\t4\t6\t1\t19
+# 2/21/2026\t14\t9\t10\t0\t37
+# 2/22/2026\t0\t1\t2\t1\t6
+# 2/23/2026\t4\t3\t4\t1\t14
+# 2/24/2026\t2\t2\t4\t1\t11
+# 2/25/2026\t2\t1\t2\t0\t5
+# 2/26/2026\t2\t1\t0\t0\t3
+# 2/27/2026\t2\t1\t2\t0\t5
+# """
+# # -------------------- KPI 07 Data (pasted) ------------------
+# PASTED_DATA_KPI7 = """day\ttcpa_yes\ttcpa_no\ttotal_records
+# 2/6/2026\t1\t0\t1
+# 2/10/2026\t1\t0\t1
+# 2/12/2026\t3\t0\t3
+# 2/13/2026\t1\t0\t1
+# 2/17/2026\t2\t0\t2
+# 2/18/2026\t8\t0\t8
+# 2/19/2026\t7\t0\t7
+# 2/20/2026\t2\t0\t2
+# 2/21/2026\t4\t0\t4
+# 2/22/2026\t1\t0\t1
+# 2/23/2026\t3\t0\t3
+# 2/25/2026\t3\t0\t3
+# 2/26/2026\t1\t0\t1
+# 2/27/2026\t1\t0\t1
+# 2/28/2026\t2\t0\t2
+# """
+
+# # -------------------- KPI 08 Data (pasted) ------------------
+# PASTED_DATA_KPI8 = """executed_transactions\tmedian_time_to_txn_execution\tp95_time_to_txn_execution
+# 5\t07:58.8\t11:30.0
+# """
+
+# # -------------------- KPI 09 Data (pasted) ------------------
+# PASTED_DATA_KPI9 = """first_seen_ts\tlast_seen_ts\tlong_realty_users
+# 2026-02-13 05:14:47.929035+00:00\t2026-02-27 23:01:00.270488+00:00\t84
+# """
+
+# # -------------------- KPI 10 Data (pasted) ------------------
+# PASTED_DATA_KPI10 = """day\tusers_touched
+# 2/13/2026\t42
+# 2/18/2026\t9
+# 2/19/2026\t5
+# 2/20/2026\t1
+# 2/21/2026\t7
+# 2/23/2026\t2
+# 2/24/2026\t9
+# 2/25/2026\t3
+# 2/26/2026\t2
+# 2/27/2026\t4
+# """
+
+# # -------------------- KPI 11 Data (pasted) ------------------
+# PASTED_DATA_KPI11 = """event_date\tmetric\ttrue_count\tfalse_count\tmissing_count
+# 3/1/2026\thasExistingMortgageCompany\t1\t0\t0
+# 3/1/2026\tinterestedInLowerPayment\t0\t0\t1
+# 2/23/2026\thasExistingMortgageCompany\t0\t1\t0
+# 2/23/2026\tinterestedInLowerPayment\t1\t0\t0
+# 2/19/2026\thasExistingMortgageCompany\t0\t1\t0
+# 2/19/2026\tinterestedInLowerPayment\t1\t0\t0
+# 2/18/2026\thasExistingMortgageCompany\t1\t0\t0
+# 2/18/2026\tinterestedInLowerPayment\t1\t0\t0
+# """
 
 
 
@@ -1287,15 +1311,23 @@ def overview_section():
 #         kpi08_section()
 # -------------------- App entrypoint -----------------------
 def main():
+    # inject_css()
+    # header()
+    # page_label, page_handler = sidebar()
+
+    # # Optional debug line (remove later)
+    # # st.caption(f"DEBUG selected page: {page_label!r}")
+
+    # # Call the handler for the selected page
+    # page_handler() 
+    # 
+
     inject_css()
     header()
     page_label, page_handler = sidebar()
-
-    # Optional debug line (remove later)
-    # st.caption(f"DEBUG selected page: {page_label!r}")
-
-    # Call the handler for the selected page
-    page_handler()   
+    
+    tables = load_data()          # fresh load every page change
+    page_handler(tables)          # pass tables into every section  
 
 
 
