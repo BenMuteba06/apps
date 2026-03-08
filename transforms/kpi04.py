@@ -1,6 +1,6 @@
 # transforms/kpi04.py
 import pandas as pd
-
+# This KPI calculates the execution rate (documents executed / documents generated) each day, which can indicate the efficiency of the document processing and user follow-through.
 def transform(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df["day"] = pd.to_datetime(df["day"], errors="coerce")
@@ -15,4 +15,4 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
 
     df = df.sort_values("day").set_index("day")
     df = df.reindex(pd.date_range(df.index.min(), df.index.max(), freq="D")).fillna(0.0)
-    return df.rename_axis("day").reset_index()
+    return df.rename_axis("day").reset_index() # ensure 'day' is a column after reindexing, for consistency with other KPIs

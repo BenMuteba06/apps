@@ -22,7 +22,7 @@ from .file_readers import (
 import re
 
 # ------------------------------------------------------
-# Data Loader Configuration
+# Data Loader Configuration Class
 # ------------------------------------------------------
 
 @dataclass(frozen=True)
@@ -44,7 +44,7 @@ class DataSourceConfig:
 
 
 # ------------------------------------------------------
-# File Name Normalization
+# File Name Normalization Function
 # ------------------------------------------------------
 
 
@@ -58,7 +58,7 @@ def normalize_name(name: str) -> str:
 
 
 # ------------------------------------------------------
-# Core Loader
+# Core Loader Function
 # ------------------------------------------------------
 
 def load_tables(config: DataSourceConfig) -> Dict[str, pd.DataFrame]:
@@ -120,7 +120,7 @@ def load_tables(config: DataSourceConfig) -> Dict[str, pd.DataFrame]:
         raise FileNotFoundError(f"No CSV/XLSX files found in: {load_dir}")
 
     # ------------------
-    # 3. Prepare naming function for read_many()
+    # 3. Prepare naming function for read_many() to create dict keys
     # ------------------
     def name_fn(path: Path) -> str:
         raw = path.stem
@@ -128,7 +128,7 @@ def load_tables(config: DataSourceConfig) -> Dict[str, pd.DataFrame]:
         return name
 
     # ------------------
-    # 4. Load all tables
+    # 4. Load all tables into a dictionary
     # ------------------
     tables = read_many(
         paths=table_files,
@@ -137,7 +137,7 @@ def load_tables(config: DataSourceConfig) -> Dict[str, pd.DataFrame]:
     )
 
     # ------------------
-    # 5. Optionally filter to allowed tables
+    # 5. Optionally filter to allowed tables if specified in config
     # ------------------
     if config.allowed_tables:
         allowed = {normalize_name(n) for n in config.allowed_tables}
@@ -146,6 +146,6 @@ def load_tables(config: DataSourceConfig) -> Dict[str, pd.DataFrame]:
     if not tables:
         raise ValueError("No tables available after applying allowed_tables filter.")
 
-    return tables
+    return tables # return a dict of DataFrames keyed by normalized table names
 
 

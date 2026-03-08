@@ -11,7 +11,7 @@ import pandas as pd
 
 
 # ---------------------------
-# Types & Config Structures
+# Types & Config Structures 
 # ---------------------------
 
 @dataclass(frozen=True)
@@ -47,7 +47,7 @@ class ReadOptions:
 
 
 # ---------------------------
-# Helpers
+# Helpers for File Handling
 # ---------------------------
 
 SUPPORTED_CSV_EXTS = {".csv", ".txt"}
@@ -116,7 +116,7 @@ def list_tables_in_dir(
 
 
 # ---------------------------
-# Core Readers
+# Core Readers and Transformers
 # ---------------------------
 
 def read_csv_file(path: str | Path, options: Optional[ReadOptions] = None) -> pd.DataFrame:
@@ -168,7 +168,7 @@ def read_csv_file(path: str | Path, options: Optional[ReadOptions] = None) -> pd
     except Exception as e:
         raise RuntimeError(f"Failed to read CSV file: {path}\nReason: {e}") from e
 
-
+# For Excel files, pandas supports .xlsx, .xlsm, .xls by default. For .xlsb, users must specify engine='pyxlsb' and have the package installed.
 def read_excel_file(path: str | Path, options: Optional[ReadOptions] = None) -> pd.DataFrame:
     """
     Read an Excel file (.xlsx/.xls/.xlsm). For .xlsb, set options.engine='pyxlsb' and install extra deps if needed.
@@ -191,7 +191,7 @@ def read_excel_file(path: str | Path, options: Optional[ReadOptions] = None) -> 
             for col in options.parse_dates:
                 if col in df.columns:
                     df[col] = pd.to_datetime(df[col], format=options.date_format, errors="coerce")
-        return df
+        return df # return the DataFrame read from Excel
 
     except ValueError as e:
         # Covers many Excel engine/sheet/column issues
@@ -199,7 +199,7 @@ def read_excel_file(path: str | Path, options: Optional[ReadOptions] = None) -> 
     except Exception as e:
         raise RuntimeError(f"Failed to read Excel file: {path}\nReason: {e}") from e
 
-
+# Unified reader that detects file type by extension and reads accordingly.
 def detect_and_read(path: str | Path, options: Optional[ReadOptions] = None) -> pd.DataFrame:
     """
     Unified entrypoint: detect file type by extension and read accordingly.
@@ -215,7 +215,7 @@ def detect_and_read(path: str | Path, options: Optional[ReadOptions] = None) -> 
 
 
 # ---------------------------
-# Batch Utilities
+# Batch Utilities for Multiple Files
 # ---------------------------
 
 def read_many(
@@ -247,7 +247,7 @@ def read_many(
 
 
 # ---------------------------
-# Optional: Lightweight Schema Hook
+# Optional: Lightweight Schema Hook for Validation
 # ---------------------------
 
 def ensure_columns(df: pd.DataFrame, required: Iterable[str], table_name: str = "table") -> pd.DataFrame:
@@ -263,7 +263,7 @@ def ensure_columns(df: pd.DataFrame, required: Iterable[str], table_name: str = 
 
 
 # ---------------------------
-# Convenience for Common CSV Pitfalls
+# Convenience for Common CSV Pitfalls (e.g., delimiter sniffing)
 # ---------------------------
 
 def sniff_csv_delimiter(path: str | Path, sample_size: int = 8192) -> str:
@@ -279,4 +279,4 @@ def sniff_csv_delimiter(path: str | Path, sample_size: int = 8192) -> str:
         dialect = sniffer.sniff(sample, delimiters=[",", ";", "\t", "|"])
         return dialect.delimiter
     except Exception:
-        return ","  # sensible default
+        return ","  # sensible default 

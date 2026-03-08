@@ -1,14 +1,13 @@
 # # io_layer/zip_utils.py
 # # Utility functions for handling ZIP files, including validation, extraction, and checksum calculation.
 
-# io_layer/zip_utils.py
 import hashlib
 import os
 import shutil
 import zipfile
 from pathlib import Path
 
-
+## ZIP Handling Utilities
 def is_zip_file(path: str | Path) -> bool:
     """Return True if the given path is a valid ZIP file."""
     path = Path(path)
@@ -71,4 +70,4 @@ def extract_zip(zip_path: str | Path, target_dir: str | Path) -> Path:
     # Save checksum so next run can skip if unchanged
     checksum_file.write_text(current_checksum)
 
-    return target_dir
+    return target_dir # return the path to the extracted folder for downstream use

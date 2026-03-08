@@ -1,8 +1,8 @@
-# CDP Insights
+# CDP Insights 
 
 Operational analytics dashboard built with Streamlit, covering our 11 KPIs across the transaction, document, eSign, user activity, and survey pipelines.
 
-## Current Dashboards
+## Current Dashboards 
 
 | Dashboard | KPIs | Description |
 |---|---|---|
