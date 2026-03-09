@@ -15,10 +15,3 @@ run:
   command: python3 -m streamlit run streamlit/app.py --server.port 8080 --server.address 0.0.0.0 --server.headless true --browser.gatherUsageStats false
   network:
     port: 8080
-  health-check:
-    protocol: HTTP
-    path: /
-    interval: 20
-    timeout: 10
-    healthy-threshold: 1
-    unhealthy-threshold: 5
