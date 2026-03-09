@@ -2,8 +2,11 @@ version: 1.0
 runtime: python3
 build:
   commands:
+    pre-build:
+      - python --version
+      - pip --version
     build:
-      - pip install -r requirements.txt
+      - pip install -r requirements.txt -v
 run:
   command: streamlit run streamlit/app.py --server.port 8080 --server.address 0.0.0.0
   network:
