@@ -5,9 +5,11 @@ build:
     pre-build:
       - python3 --version
       - pip3 --version
+      - python3 healthcheck.py
     build:
       - pip3 install -r requirements.txt
 run:
-  command: python3 -m streamlit run streamlit/app.py --server.port 8080 --server.address 0.0.0.0
+  command: python3 -m streamlit run streamlit/app.py --server.port 8080 --server.address 0.0.0.0 --server.headless true --browser.gatherUsageStats false
   network:
     port: 8080
+    env: APP_PORT
